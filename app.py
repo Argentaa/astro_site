@@ -10,6 +10,13 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+
+def verify_secretpass(secret_password):
+    senha = 'astrotoldos2024'
+    
+    if secret_password == senha:
+        return True
+    
 def get_db_connection():
     try:
         connection = mysql.connector.connect(host='localhost',database='astro',user='root',password='root')
@@ -30,6 +37,7 @@ def load_user(user_id):
     cursor.execute("SELECT id, username FROM users WHERE id = %s", (user_id,))
     user = cursor.fetchone()
     connection.close()
+    
     if user:
         return User(user[0], user[1])
     return None
@@ -57,22 +65,29 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
+        
+        name = request.form['name']
         email = request.form['email']
         password = bcrypt.generate_password_hash(request.form['password']).decode('utf-8')
+        secret_pass = request.form['secret_password']
         
         connection = get_db_connection()
         cursor = connection.cursor()
-        try:
-            cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)", (username, email, password))
-            connection.commit()
-            flash('Account created successfully', 'success')
-            return redirect(url_for('login'))
-        except mysql.connector.IntegrityError:
-            flash('Username or email already exists', 'danger')
-        finally:
-            cursor.close()
-            connection.close()
+
+        if verify_secretpass(secret_pass):
+            try:
+                cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)", (name, email, password))
+                connection.commit()
+                flash('Conta criada com sucesso', 'success')
+                return redirect(url_for('login'))
+            except mysql.connector.IntegrityError:
+                flash('Nome ou Email já existentes', 'danger')
+            finally:
+                cursor.close()
+                connection.close()
+        else:
+            flash('Senha secreta inválida', 'danger')
+            
     return render_template('register.html')
 
 @app.route('/logout')
