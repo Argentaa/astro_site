@@ -1,8 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_bcrypt import Bcrypt
-from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
-import mysql.connector
+from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin, current_user
+import mysql.connector, os, time
+from uuid import uuid4
 from mysql.connector import Error
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'DIjhN2ygPe'
@@ -10,6 +12,8 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+app.config['UPLOAD_FOLDER'] = 'static/uploads/'  
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 def verify_secretpass(secret_password):
     senha = 'astrotoldos2024!'
@@ -109,9 +113,90 @@ def contato():
 def orcamento():
     return render_template('quote.html')
 
-@app.route('/nossos-produtos')  
+@app.route('/nossos-produtos', methods=['GET'])
 def nossos_produtos():
-    return render_template('service.html')
+    connection = get_db_connection()
+    
+    if connection:
+        try:
+            cursor = connection.cursor()
+            sql = "SELECT id, nome, descricao, foto_principal_url FROM cano;"
+            cursor.execute(sql)
+            canos = cursor.fetchall() 
+            cursor.close()
+        except Error as e:
+            print(f"Erro ao consultar dados no banco de dados: {e}")
+        finally:
+            connection.close()
+            
+    if current_user.is_authenticated:
+        return render_template('produtos_adm.html', canos=canos)
+    
+    return render_template('produtos.html', canos=canos)
+
+
+@app.route('/adicionar-cano', methods=['GET', 'POST'])
+def adicionar_cano():
+    
+    if current_user.is_authenticated:
+        if request.method == 'POST':
+            nome = request.form.get('nome')
+            descricao = request.form.get('descricao')
+            foto = request.files['foto']
+
+            if foto:
+                # Gera um nome único para a foto
+                timestamp = int(time.time())  # Obtemos o timestamp atual
+                unique_id = uuid4().hex  # Gera um UUID único
+                extension = os.path.splitext(foto.filename)[1]  # Pega a extensão do arquivo
+                filename = f"{nome}_{timestamp}_{unique_id}{extension}"  # Nome único para o arquivo
+                foto_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                foto_path_bd = 'uploads/' + filename
+                foto.save(foto_path)
+            else:
+                foto_path = None
+
+            connection = get_db_connection()
+            if connection:
+                try:
+                    cursor = connection.cursor()
+                    sql = """
+                        INSERT INTO cano (nome, descricao, foto_principal_url)
+                        VALUES (%s, %s, %s)
+                    """
+                    cursor.execute(sql, (nome, descricao, foto_path_bd))
+                    connection.commit()
+                    cursor.close()
+                except Error as e:
+                    print(f"Erro ao inserir dados no banco de dados: {e}")
+                finally:
+                    connection.close()
+
+            return redirect(url_for('nossos_produtos'))
+    
+    return redirect(url_for('nossos_produtos'))
+
+@app.route('/cano/<int:cano_id>', methods=['GET'])
+def cano(cano_id):
+    connection = get_db_connection()
+    cano = None
+    if connection:
+        try:
+            cursor = connection.cursor()
+            sql = "SELECT id, nome, descricao, foto_principal_url FROM cano WHERE id = %s;"
+            cursor.execute(sql, (cano_id,))
+            cano = cursor.fetchone()  # Obtém a linha correspondente ao ID
+            cursor.close()
+        except Error as e:
+            print(f"Erro ao consultar dados no banco de dados: {e}")
+        finally:
+            connection.close()
+    
+    if cano:
+        return render_template('cano.html', cano=cano)
+    else:
+        return "Cano não encontrado", 404
+
 
 @app.errorhandler(404) 
 def not_found(e):  

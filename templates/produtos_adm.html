@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+
+    <!-- Page Header Start -->
+    <div class="container-fluid page-header py-5 mb-5 wow fadeIn" data-wow-delay="0.1s">
+        <div class="container text-center py-5">
+            <h1 class="display-4 text-white animated slideInDown mb-4">Produtos</h1>
+        </div>
+    </div>
+    <!-- Page Header End -->
+
+    <!-- Service Start -->
+    <div class="container-xxl py-5">
+        <div class="container">
+            <div class="text-center mx-auto wow fadeInUp" data-wow-delay="0.1s" style="max-width: 500px;">
+                <h1 class="display-6 mb-5">Canos de aço</h1>
+            </div>
+
+            <!-- Modal Adicionar Cano -->
+            <div class="modal fade" id="addCanoModal" tabindex="-1" aria-labelledby="addCanoModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addCanoModalLabel">Adicionar Novo Cano</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ url_for('adicionar_cano') }}" method="POST" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="nome" class="form-label">Nome</label>
+                                    <input type="text" class="form-control" id="nome" name="nome" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="descricao" class="form-label">Descrição</label>
+                                    <textarea class="form-control" id="descricao" name="descricao" rows="3" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="foto" class="form-label">Foto</label>
+                                    <input type="file" class="form-control" id="foto" name="foto" accept="image/*" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Produtos Existentes -->
+            <div class="row g-4 justify-content-center">
+                {% for cano in canos %}
+                    <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                        <div class="service-item">
+                            <img class="img-fluid" src="static/{{ cano[3] }}" alt="{{ cano[1] }}">  
+                            <div class="d-flex align-items-center bg-light">
+                                <div class="service-icon flex-shrink-0 bg-primary"></div>
+                                <a class="h4 mx-4 mb-0" href="{{ url_for('cano', cano_id=cano[0]) }}">{{ cano[1] }}</a> 
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Botão Adicionar Cano -->
+            <div class="text-center mb-4">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCanoModal" >
+                    Adicionar Cano
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Service End -->
+
+{% endblock %}
+
