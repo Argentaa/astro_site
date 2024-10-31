@@ -12,7 +12,7 @@ login_manager.login_view = 'login'
 
 
 def verify_secretpass(secret_password):
-    senha = 'astrotoldos2024'
+    senha = 'astrotoldos2024!'
     
     if secret_password == senha:
         return True
@@ -57,6 +57,7 @@ def login():
         if user and bcrypt.check_password_hash(user[1], password):
             user_obj = User(user[0], username)
             login_user(user_obj)
+            flash('')
             return redirect(url_for('index'))
         else:
             flash('Invalid username or password', 'danger')
@@ -76,7 +77,7 @@ def register():
 
         if verify_secretpass(secret_pass):
             try:
-                cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)", (name, email, password))
+                cursor.execute("INSERT INTO user (username, email, password) VALUES (%s, %s, %s)", (name, email, password))
                 connection.commit()
                 flash('Conta criada com sucesso', 'success')
                 return redirect(url_for('login'))
