@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
 
+<style>
+    .flash-container {
+        position: absolute;
+        top: 120px; 
+        left: 0;
+        right: 0;
+        z-index: 1050; 
+    }
+</style>
+
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         <div class="flash-container">
@@ -146,7 +156,7 @@
                     <div class="d-flex align-items-center bg-light">
                         <div class="service-icon flex-shrink-0">
                         </div>
-                        <a class="h4 mx-4 mb-0 text-primary teste" href="">Tubo de ferro galvanizado redondo</a>
+                        <a class="h4 mx-4 mb-0 teste" href="">Tubo de ferro galvanizado redondo</a>
                     </div>
                 </div>
             </div>
@@ -156,7 +166,7 @@
                     <div class="d-flex align-items-center bg-light">
                         <div class="service-icon flex-shrink-0">
                         </div>
-                        <a class="h4 mx-4 mb-0 text-primary teste" href="">Tubo de ferro galvanizado quadrado</a>
+                        <a class="h4 mx-4 mb-0 teste" href="">Tubo de ferro galvanizado quadrado</a>
                     </div>
                 </div>
             </div>
@@ -166,7 +176,7 @@
                     <div class="d-flex align-items-center bg-light">
                         <div class="service-icon flex-shrink-0">
                         </div>
-                        <a class="h4 mx-4 mb-0 text-primary teste" href="">Tubo de ferro galvanizado retangular</a>
+                        <a class="h4 mx-4 mb-0 teste" href="">Tubo de ferro galvanizado retangular</a>
                     </div>
                 </div>
             </div>

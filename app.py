@@ -34,7 +34,7 @@ class User(UserMixin):
 def load_user(user_id):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT id, username FROM users WHERE id = %s", (user_id,))
+    cursor.execute("SELECT id, username FROM user WHERE id = %s", (user_id,))
     user = cursor.fetchone()
     connection.close()
     
@@ -45,22 +45,22 @@ def load_user(user_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
         
         connection = get_db_connection()
         cursor = connection.cursor()
-        cursor.execute("SELECT id, password FROM users WHERE username = %s", (username,))
+        cursor.execute("SELECT id, password FROM user WHERE email = %s", (email,))
         user = cursor.fetchone()
         connection.close()
         
         if user and bcrypt.check_password_hash(user[1], password):
-            user_obj = User(user[0], username)
+            user_obj = User(user[0], email)
             login_user(user_obj)
-            flash('')
+            flash('Logado com Sucesso', 'success')
             return redirect(url_for('index'))
         else:
-            flash('Invalid username or password', 'danger')
+            flash('Senha ou Email inválidos', 'danger')
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -109,8 +109,8 @@ def contato():
 def orcamento():
     return render_template('quote.html')
 
-@app.route('/nossos-serviços')
-def nossos_servicos():
+@app.route('/nossos-produtos')  
+def nossos_produtos():
     return render_template('service.html')
 
 @app.errorhandler(404) 
