@@ -5,6 +5,7 @@ import mysql.connector, os, time
 from uuid import uuid4
 from mysql.connector import Error
 from werkzeug.utils import secure_filename
+from collections import defaultdict
 
 app = Flask(__name__)
 app.secret_key = 'DIjhN2ygPe'
@@ -134,7 +135,6 @@ def nossos_produtos():
     
     return render_template('produtos.html', canos=canos)
 
-
 @app.route('/adicionar-tubo', methods=['GET', 'POST'])
 def adicionar_cano():
     
@@ -185,34 +185,42 @@ def cano(cano_id):
         try:
             cursor = connection.cursor()
             
-            # Consulta para obter as informações do cano
             sql = "SELECT id, nome, descricao, foto_principal_url FROM cano WHERE id = %s;"
             cursor.execute(sql, (cano_id,))
             cano = cursor.fetchone()
-            
-            # Consulta para obter as bitolas e espessuras associadas ao cano
+
             cursor.execute("""
-                SELECT b.descricao AS bitola,
-                       e.valor AS espessura
-                FROM bitola b
-                LEFT JOIN espessura e ON b.id = e.bitola_id
-                WHERE b.cano_id = %s
-                ORDER BY b.id;
+                SELECT 
+                    b.descricao AS bitola,
+                    GROUP_CONCAT(e.valor ORDER BY e.valor SEPARATOR ', ') AS espessuras
+                FROM 
+                    bitola b
+                LEFT JOIN 
+                    espessura e ON b.id = e.bitola_id
+                WHERE 
+                    b.cano_id = %s
+                GROUP BY 
+                    b.id
+                ORDER BY 
+                    b.id;
             """, (cano_id,))
-            
+
             resultados = cursor.fetchall()
+
+            resultados_formatados = [{'bitola': bitola, 'espessuras': espessuras} for bitola, espessuras in resultados]
+
+            print(resultados_formatados)
+
             cursor.close()
         except Error as e:
             print(f"Erro ao consultar dados no banco de dados: {e}")
         finally:
             connection.close()
     
-    # Renderiza o template adequado com base na autenticação do usuário
     if cano:
         if current_user.is_authenticated:
-            print(resultados)
-            return render_template('cano_adm.html', cano=cano, resultados=resultados)
-        return render_template('cano.html', cano=cano, resultados=resultados)
+            return render_template('cano_adm.html', cano=cano, resultados=resultados_formatados)
+        return render_template('cano.html', cano=cano, resultados=resultados_formatados)
     else:
         return "Cano não encontrado", 404
 

@@ -10,6 +10,9 @@
         text-align: center;
         vertical-align: middle;
     }
+    td[contenteditable="true"]:focus {
+        outline: 2px solid #007bff; /* Cor de destaque ao focar */
+    }
 </style>
 <!-- Page Header Start -->
 <div class="container-fluid page-header py-5 mb-5 wow fadeIn" data-wow-delay="0.1s">
@@ -43,45 +46,34 @@
                             <thead>
                                 <tr>
                                     <th>Bitola</th>
-                                    <th colspan="4">Espessura em Milímetros</th>
+                                    <th>Espessuras em Milímetros</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="tabelaBitolas">
                                 {% for bitola in resultados %}
-                                <tr>
-                                    <td>{{ bitola[0] }}</td>
-                                    <td>
-                                        {% if bitola[1] != 'Não' %}
-                                            {{ bitola[1] }}
-                                        {% else %}
-                                            Não
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if bitola[2] != 'Não' %}
-                                            {{ bitola[2] }}
-                                        {% else %}
-                                            Não
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if bitola[3] != 'Não' %}
-                                            {{ bitola[3] }}
-                                        {% else %}
-                                            Não
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if bitola[4] != 'Não' %}
-                                            {{ bitola[4] }}
-                                        {% else %}
-                                            Não
-                                        {% endif %}
-                                    </td>
-                                </tr>
+                                    <tr>
+                                        <td contenteditable="true">{{ bitola.bitola }}</td>
+                                        <td>
+                                            <div class="d-flex flex-wrap">
+                                                {% if bitola.espessuras is not none %}
+                                                    {% set espessuras = bitola.espessuras.split(', ') %}
+                                                    {% for espessura in espessuras %}
+                                                        <div class="p-1" style="border: 1px solid #007bff; border-radius: 10px; margin-right: 10px;">
+                                                            <span contenteditable="true">{{ espessura }}</span>
+                                                        </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    Não disponível
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addBitolaModal">
+                            Adicionar Bitola e Espessura
+                        </button>
                     </div>
                 </div>
             </div>
@@ -89,5 +81,71 @@
         <!-- Tabela de Bitolas e Espessuras End -->
     </div>
 </div>
-<!-- Cano Details End -->
+
+<!-- Modal para Adicionar Bitola e Espessura -->
+<div class="modal fade" id="addBitolaModal" tabindex="-1" aria-labelledby="addBitolaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addBitolaModalLabel">Adicionar Bitola e Espessura</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="bitolaInput">Bitola</label>
+                    <input type="text" class="form-control" id="bitolaInput" placeholder="Insira a bitola">
+                </div>
+                <div class="form-group">
+                    <label for="espessuraInput">Espessura em Milímetros</label>
+                    <input type="text" class="form-control" id="espessuraInput" placeholder="Insira a espessura">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="saveButton">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts do Bootstrap -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    // Script para adicionar nova bitola e espessura à tabela
+    document.getElementById('saveButton').addEventListener('click', function() {
+        const bitola = document.getElementById('bitolaInput').value;
+        const espessura = document.getElementById('espessuraInput').value;
+        
+        if (bitola && espessura) {
+            const tabela = document.getElementById('tabelaBitolas');
+            const novaLinha = tabela.insertRow();
+            const celulaBitola = novaLinha.insertCell(0);
+            const celulaEspessura = novaLinha.insertCell(1);
+
+            celulaBitola.contentEditable = "true";
+            celulaEspessura.innerHTML = `<div class="d-flex flex-wrap">
+                <div class="p-1" style="border: 1px solid #007bff; border-radius: 10px; margin-right: 10px;">
+                    <span contenteditable="true">${espessura}</span>
+                </div>
+            </div>`;
+
+            celulaBitola.innerText = bitola;
+
+            // Limpar os campos do modal
+            document.getElementById('bitolaInput').value = '';
+            document.getElementById('espessuraInput').value = '';
+
+            // Fechar o modal
+            $('#addBitolaModal').modal('hide');
+        } else {
+            alert("Por favor, preencha todos os campos.");
+        }
+    });
+</script>
+
 {% endblock %}
