@@ -23,7 +23,7 @@ def verify_secretpass(secret_password):
     
 def get_db_connection():
     try:
-        connection = mysql.connector.connect(host='localhost',database='astro',user='root',password='root')
+        connection = mysql.connector.connect(host='localhost',database='astro1',user='root',password='root')
         return connection
     except Error as e:
         print(f"Error connecting to MySQL Platform: {e}")
@@ -135,7 +135,7 @@ def nossos_produtos():
     return render_template('produtos.html', canos=canos)
 
 
-@app.route('/adicionar-cano', methods=['GET', 'POST'])
+@app.route('/adicionar-tubo', methods=['GET', 'POST'])
 def adicionar_cano():
     
     if current_user.is_authenticated:
@@ -145,11 +145,10 @@ def adicionar_cano():
             foto = request.files['foto']
 
             if foto:
-                # Gera um nome único para a foto
-                timestamp = int(time.time())  # Obtemos o timestamp atual
-                unique_id = uuid4().hex  # Gera um UUID único
-                extension = os.path.splitext(foto.filename)[1]  # Pega a extensão do arquivo
-                filename = f"{nome}_{timestamp}_{unique_id}{extension}"  # Nome único para o arquivo
+                timestamp = int(time.time())  
+                unique_id = uuid4().hex  
+                extension = os.path.splitext(foto.filename)[1]  
+                filename = f"{nome}_{timestamp}_{unique_id}{extension}"  
                 foto_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 foto_path_bd = 'uploads/' + filename
                 foto.save(foto_path)
@@ -176,24 +175,44 @@ def adicionar_cano():
     
     return redirect(url_for('nossos_produtos'))
 
-@app.route('/cano/<int:cano_id>', methods=['GET'])
+@app.route('/tubo/<int:cano_id>', methods=['GET'])
 def cano(cano_id):
     connection = get_db_connection()
     cano = None
+    resultados = []
+
     if connection:
         try:
             cursor = connection.cursor()
+            
+            # Consulta para obter as informações do cano
             sql = "SELECT id, nome, descricao, foto_principal_url FROM cano WHERE id = %s;"
             cursor.execute(sql, (cano_id,))
-            cano = cursor.fetchone()  # Obtém a linha correspondente ao ID
+            cano = cursor.fetchone()
+            
+            # Consulta para obter as bitolas e espessuras associadas ao cano
+            cursor.execute("""
+                SELECT b.descricao AS bitola,
+                       e.valor AS espessura
+                FROM bitola b
+                LEFT JOIN espessura e ON b.id = e.bitola_id
+                WHERE b.cano_id = %s
+                ORDER BY b.id;
+            """, (cano_id,))
+            
+            resultados = cursor.fetchall()
             cursor.close()
         except Error as e:
             print(f"Erro ao consultar dados no banco de dados: {e}")
         finally:
             connection.close()
     
+    # Renderiza o template adequado com base na autenticação do usuário
     if cano:
-        return render_template('cano.html', cano=cano)
+        if current_user.is_authenticated:
+            print(resultados)
+            return render_template('cano_adm.html', cano=cano, resultados=resultados)
+        return render_template('cano.html', cano=cano, resultados=resultados)
     else:
         return "Cano não encontrado", 404
 

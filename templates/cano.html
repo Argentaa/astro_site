@@ -1,38 +1,93 @@
 {% extends "base.html" %}
 {% block content %}
-
-    <style>
-        .cano-imagem {
-            width: 100%; /* Ajusta a imagem para a largura total do contêiner */
-            height: auto; /* Mantém a proporção da imagem */
-            max-width: 400px; /* Define um tamanho máximo, se desejado */
-            
-        }
-    </style>
-    <!-- Page Header Start -->
-    <div class="container-fluid page-header py-5 mb-5 wow fadeIn" data-wow-delay="0.1s">
-        <div class="container text-center py-5">
-            <h1 class="display-4 text-white animated slideInDown mb-4">{{ cano[1] }}</h1>
-        </div>
+<style>
+    .cano-imagem {
+        width: 100%;
+        height: auto;
+        max-width: 400px;
+    }
+    .table th, .table td {
+        text-align: center;
+        vertical-align: middle;
+    }
+</style>
+<!-- Page Header Start -->
+<div class="container-fluid page-header py-5 mb-5 wow fadeIn" data-wow-delay="0.1s">
+    <div class="container text-center py-5">
+        <h1 class="display-4 text-white animated slideInDown mb-4">{{ cano[1] }}</h1>
     </div>
-    <!-- Page Header End -->
+</div>
+<!-- Page Header End -->
 
-    <!-- Cano Details Start -->
-    <div class="container-xxl py-5">
-        <div class="container">
-            <div class="row g-4 justify-content-center">
-                <div class="col-lg-8 wow fadeInUp" data-wow-delay="0.1s">
-                    <div class="card">
-                        <img class="card-img-top cano-imagem" src="{{ url_for('static', filename=cano[3]) }}" alt="{{ cano[1] }}">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ cano[1] }}</h5>
-                            <pre class="card-text" style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.5;">{{ cano[2] }}</pre>
-                        </div>
+<!-- Cano Details Start -->
+<div class="container-xxl py-5">
+    <div class="container">
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-8 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="card">
+                    <img class="card-img-top cano-imagem" src="{{ url_for('static', filename=cano[3]) }}" alt="{{ cano[1] }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ cano[1] }}</h5>
+                        <pre class="card-text" style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.5;">{{ cano[2] }}</pre>
                     </div>
                 </div>
             </div>
         </div>
+        <!-- Tabela de Bitolas e Espessuras Start -->
+        <div class="row g-4 justify-content-center mt-4">
+            <div class="col-lg-8 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Bitolas e Espessuras</h5>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Bitola</th>
+                                    <th colspan="4">Espessura em Milímetros</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bitola in resultados %}
+                                <tr>
+                                    <td>{{ bitola[0] }}</td>
+                                    <td>
+                                        {% if bitola[1] != 'Não' %}
+                                            {{ bitola[1] }}
+                                        {% else %}
+                                            Não
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if bitola[2] != 'Não' %}
+                                            {{ bitola[2] }}
+                                        {% else %}
+                                            Não
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if bitola[3] != 'Não' %}
+                                            {{ bitola[3] }}
+                                        {% else %}
+                                            Não
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if bitola[4] != 'Não' %}
+                                            {{ bitola[4] }}
+                                        {% else %}
+                                            Não
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Tabela de Bitolas e Espessuras End -->
     </div>
-    <!-- Cano Details End -->
-
+</div>
+<!-- Cano Details End -->
 {% endblock %}
