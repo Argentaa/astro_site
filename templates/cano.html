@@ -43,41 +43,17 @@
                             <thead>
                                 <tr>
                                     <th>Bitola</th>
-                                    <th colspan="4">Espessura em Milímetros</th>
+                                    <th colspan="{{ resultados | length }}">Espessura em Milímetros</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for bitola in resultados %}
+                                {% for caracteristicas in resultados %}
                                 <tr>
-                                    <td>{{ bitola[0] }}</td>
-                                    <td>
-                                        {% if bitola[1] != 'Não' %}
-                                            {{ bitola[1] }}
-                                        {% else %}
-                                            Não
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if bitola[2] != 'Não' %}
-                                            {{ bitola[2] }}
-                                        {% else %}
-                                            Não
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if bitola[3] != 'Não' %}
-                                            {{ bitola[3] }}
-                                        {% else %}
-                                            Não
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if bitola[4] != 'Não' %}
-                                            {{ bitola[4] }}
-                                        {% else %}
-                                            Não
-                                        {% endif %}
-                                    </td>
+                                    <td>{{ caracteristicas['bitola'] }}</td>
+
+                                    {% for espessura in caracteristicas['espessuras'] %}
+                                        <td>{{ espessura }}</td>
+                                    {% endfor %}
                                 </tr>
                                 {% endfor %}
                             </tbody>

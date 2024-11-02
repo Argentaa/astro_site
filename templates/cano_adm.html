@@ -10,10 +10,8 @@
         text-align: center;
         vertical-align: middle;
     }
-    td[contenteditable="true"]:focus {
-        outline: 2px solid #007bff; /* Cor de destaque ao focar */
-    }
 </style>
+
 <!-- Page Header Start -->
 <div class="container-fluid page-header py-5 mb-5 wow fadeIn" data-wow-delay="0.1s">
     <div class="container text-center py-5">
@@ -36,116 +34,123 @@
                 </div>
             </div>
         </div>
-        <!-- Tabela de Bitolas e Espessuras Start -->
-        <div class="row g-4 justify-content-center mt-4">
-            <div class="col-lg-8 wow fadeInUp" data-wow-delay="0.1s">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Bitolas e Espessuras</h5>
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Bitola</th>
-                                    <th>Espessuras em Milímetros</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabelaBitolas">
-                                {% for bitola in resultados %}
+
+        <!-- Form para editar a tabela de Bitolas e Espessuras -->
+        <form action="" method="POST">
+            <div class="row g-4 justify-content-center mt-4">
+                <div class="col-lg-8 wow fadeInUp" data-wow-delay="0.1s">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Bitolas e Espessuras</h5>
+                            <table class="table table-bordered" id="bitolas-table">
+                                <thead>
                                     <tr>
-                                        <td contenteditable="true">{{ bitola.bitola }}</td>
-                                        <td>
-                                            <div class="d-flex flex-wrap">
-                                                {% if bitola.espessuras is not none %}
-                                                    {% set espessuras = bitola.espessuras.split(', ') %}
+                                        <th>Bitola</th>
+                                        <th colspan="10">Espessura em Milímetros</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for caracteristicas in resultados %}
+                                        <tr>
+                                            <td>
+                                                <input type="text" name="bitola_{{ caracteristicas['bitola'] }}" value="{{ caracteristicas['bitola'] }}" class="form-control" />
+                                            </td>
+
+                                            <!-- Container de espessuras -->
+                                            <td colspan="10">
+                                                <div id="espessuras-{{ loop.index }}" class="d-flex flex-wrap gap-2">
+                                                    {% set espessuras = caracteristicas['espessuras'].split(', ') if caracteristicas['espessuras'] is string else caracteristicas['espessuras'] %}
+
                                                     {% for espessura in espessuras %}
-                                                        <div class="p-1" style="border: 1px solid #007bff; border-radius: 10px; margin-right: 10px;">
-                                                            <span contenteditable="true">{{ espessura }}</span>
+                                                        <div class="d-flex align-items-center mb-2">
+                                                            <input type="text" name="espessura_{{ caracteristicas['bitola'] }}[]" value="{{ espessura }}" class="form-control" style="width: 70px;" />
+                                                            <button type="button" class="btn btn-danger btn-sm ms-2" onclick="removeEspessura(this)">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
                                                         </div>
                                                     {% endfor %}
-                                                {% else %}
-                                                    Não disponível
-                                                {% endif %}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addBitolaModal">
-                            Adicionar Bitola e Espessura
-                        </button>
+                                                </div>
+                                                <button type="button" class="btn btn-success mt-2" onclick="addEspessura({{ loop.index }})">
+                                                    <i class="bi bi-plus"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <!-- Botão para adicionar uma nova bitola -->
+                            <button type="button" class="btn btn-primary mt-3" onclick="addBitola()">
+                                <i class="bi bi-plus-circle"></i> Adicionar Bitola
+                            </button>
+                            <button type="submit" class="btn btn-success mt-3">Salvar Alterações</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
         <!-- Tabela de Bitolas e Espessuras End -->
     </div>
 </div>
+<!-- Cano Details End -->
 
-<!-- Modal para Adicionar Bitola e Espessura -->
-<div class="modal fade" id="addBitolaModal" tabindex="-1" aria-labelledby="addBitolaModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addBitolaModalLabel">Adicionar Bitola e Espessura</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="bitolaInput">Bitola</label>
-                    <input type="text" class="form-control" id="bitolaInput" placeholder="Insira a bitola">
-                </div>
-                <div class="form-group">
-                    <label for="espessuraInput">Espessura em Milímetros</label>
-                    <input type="text" class="form-control" id="espessuraInput" placeholder="Insira a espessura">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                <button type="button" class="btn btn-primary" id="saveButton">Salvar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Scripts do Bootstrap -->
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
+<!-- Script para adicionar e remover inputs de espessura e bitola dinamicamente -->
 <script>
-    // Script para adicionar nova bitola e espessura à tabela
-    document.getElementById('saveButton').addEventListener('click', function() {
-        const bitola = document.getElementById('bitolaInput').value;
-        const espessura = document.getElementById('espessuraInput').value;
-        
-        if (bitola && espessura) {
-            const tabela = document.getElementById('tabelaBitolas');
-            const novaLinha = tabela.insertRow();
-            const celulaBitola = novaLinha.insertCell(0);
-            const celulaEspessura = novaLinha.insertCell(1);
+    let bitolaIndex = {{ resultados|length + 1 }};  // Define o índice inicial
 
-            celulaBitola.contentEditable = "true";
-            celulaEspessura.innerHTML = `<div class="d-flex flex-wrap">
-                <div class="p-1" style="border: 1px solid #007bff; border-radius: 10px; margin-right: 10px;">
-                    <span contenteditable="true">${espessura}</span>
-                </div>
-            </div>`;
+    function addEspessura(rowIndex) {
+        const container = document.getElementById(`espessuras-${rowIndex}`);
+        const newDiv = document.createElement("div");
+        newDiv.className = "d-flex align-items-center mb-2";
 
-            celulaBitola.innerText = bitola;
+        const newInput = document.createElement("input");
+        newInput.type = "text";
+        newInput.name = `espessura_nova_${rowIndex}[]`;
+        newInput.className = "form-control";
+        newInput.style.width = "70px";
 
-            // Limpar os campos do modal
-            document.getElementById('bitolaInput').value = '';
-            document.getElementById('espessuraInput').value = '';
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "btn btn-danger btn-sm ms-2";
+        removeButton.innerHTML = '<i class="bi bi-trash"></i>';
+        removeButton.onclick = function() {
+            container.removeChild(newDiv);
+        };
 
-            // Fechar o modal
-            $('#addBitolaModal').modal('hide');
-        } else {
-            alert("Por favor, preencha todos os campos.");
-        }
-    });
+        newDiv.appendChild(newInput);
+        newDiv.appendChild(removeButton);
+        container.appendChild(newDiv);
+    }
+
+    function removeEspessura(button) {
+        button.parentNode.remove();
+    }
+
+    function addBitola() {
+        const tableBody = document.querySelector("#bitolas-table tbody");
+        const newRow = document.createElement("tr");
+
+        // Coluna da nova bitola
+        const bitolaCell = document.createElement("td");
+        const bitolaInput = document.createElement("input");
+        bitolaInput.type = "text";
+        bitolaInput.name = `bitola_nova_${bitolaIndex}`;
+        bitolaInput.className = "form-control";
+        bitolaCell.appendChild(bitolaInput);
+        newRow.appendChild(bitolaCell);
+
+        // Coluna das espessuras
+        const espessurasCell = document.createElement("td");
+        espessurasCell.colSpan = 10;
+        espessurasCell.innerHTML = `
+            <div id="espessuras-${bitolaIndex}" class="d-flex flex-wrap gap-2"></div>
+            <button type="button" class="btn btn-success mt-2" onclick="addEspessura(${bitolaIndex})">
+                <i class="bi bi-plus"></i>
+            </button>
+        `;
+
+        newRow.appendChild(espessurasCell);
+        tableBody.appendChild(newRow);
+        bitolaIndex++;
+    }
 </script>
-
 {% endblock %}

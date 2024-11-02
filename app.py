@@ -190,24 +190,35 @@ def cano(cano_id):
             cano = cursor.fetchone()
 
             cursor.execute("""
-                SELECT 
-                    b.descricao AS bitola,
-                    GROUP_CONCAT(e.valor ORDER BY e.valor SEPARATOR ', ') AS espessuras
-                FROM 
-                    bitola b
-                LEFT JOIN 
-                    espessura e ON b.id = e.bitola_id
-                WHERE 
-                    b.cano_id = %s
-                GROUP BY 
-                    b.id
-                ORDER BY 
-                    b.id;
-            """, (cano_id,))
+                                SELECT 
+                                    b.id AS bitola_id,
+                                    b.descricao AS bitola,
+                                    GROUP_CONCAT(e.id ORDER BY e.valor SEPARATOR ', ') AS espessura_ids,
+                                    GROUP_CONCAT(e.valor ORDER BY e.valor SEPARATOR ', ') AS espessuras
+                                FROM 
+                                    bitola b
+                                LEFT JOIN 
+                                    espessura e ON b.id = e.bitola_id
+                                WHERE 
+                                    b.cano_id = %s
+                                GROUP BY 
+                                    b.id
+                                ORDER BY 
+                                    b.id;
+                            """, (cano_id,))
+
 
             resultados = cursor.fetchall()
-
-            resultados_formatados = [{'bitola': bitola, 'espessuras': espessuras} for bitola, espessuras in resultados]
+            
+            resultados_formatados = [
+                                        {
+                                            'bitola_id': bitola_id,
+                                            'bitola': bitola,
+                                            'espessuras': [float(valor.strip()) for valor in espessuras.split(',')],
+                                            'espessura_ids': [int(esp_id.strip()) for esp_id in espessura_ids.split(',')] if espessura_ids else []
+                                        } 
+                                        for bitola_id, bitola, espessura_ids, espessuras in resultados
+                                    ]
 
             print(resultados_formatados)
 
@@ -224,6 +235,41 @@ def cano(cano_id):
     else:
         return "Cano não encontrado", 404
 
+@app.route('/edit_caracteristicas/<int:cano_id>', methods=['GET', 'POST'])
+def edit_caracteristicas(cano_id):
+    conn = get_db_connection()
+    if request.method == 'POST':
+        # Itera sobre bitolas e espessuras para atualização
+        for key, value in request.form.items():
+            if key.startswith('bitola_'):
+                bitola_id = key.split('_')[1]
+                descricao = value
+                conn.execute("UPDATE bitola SET descricao = %s WHERE id = %s", (descricao, bitola_id))
+
+            elif key.startswith('espessura_'):
+                bitola_id = key.split('_')[1]
+                espessuras = request.form.getlist(key)
+                # Atualizar ou inserir espessuras
+                conn.execute("DELETE FROM espessura WHERE bitola_id = %s", (bitola_id,))
+                for esp in espessuras:
+                    if esp.strip():
+                        conn.execute("INSERT INTO espessura (bitola_id, valor) VALUES (%s, %s)", (bitola_id, esp))
+        
+        # Inserir nova bitola e espessuras associadas
+        nova_bitola = request.form.get('nova_bitola')
+        novas_espessuras = request.form.getlist('nova_espessura')
+        if nova_bitola:
+            cursor = conn.execute("INSERT INTO bitola (cano_id, descricao) VALUES (%s, %s)", (1, nova_bitola))
+            nova_bitola_id = cursor.lastrowid
+            for esp in novas_espessuras:
+                if esp.strip():
+                    conn.execute("INSERT INTO espessura (bitola_id, valor) VALUES (%s, %s)", (nova_bitola_id, esp))
+        
+        conn.commit()
+        return redirect(url_for('edit_bitolas'))
+    
+    # Obter dados para exibir no template
+    return redirect(url_for('tubo', cano_id=cano_id))
 
 @app.errorhandler(404) 
 def not_found(e):  
