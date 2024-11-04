@@ -12,9 +12,7 @@
     <!-- Service Start -->
     <div class="container-xxl py-5">
         <div class="container">
-            <div class="text-center mx-auto wow fadeInUp" data-wow-delay="0.1s" style="max-width: 500px;">
-                <h1 class="display-6 mb-5">Tubos de aço</h1>
-            </div>
+            
 
             <!-- Produtos Existentes -->
             <div class="row g-4 justify-content-center">
@@ -29,6 +27,41 @@
                         </div>
                     </div>
                 {% endfor %}
+            </div>
+
+            
+            <div class="text-center mb-4" style="margin-top: 1.5rem;">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCanoModal" >
+                    Adicionar Tubo
+                </button>
+            </div>
+
+            <div class="modal fade" id="addCanoModal" tabindex="-1" aria-labelledby="addCanoModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addCanoModalLabel">Adicionar Novo Tubo</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ url_for('adicionar_cano') }}" method="POST" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="nome" class="form-label">Nome</label>
+                                    <input type="text" class="form-control" id="nome" name="nome" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="descricao" class="form-label">Descrição</label>
+                                    <textarea class="form-control" id="descricao" name="descricao" rows="3" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="foto" class="form-label">Foto Principal</label>
+                                    <input type="file" class="form-control" id="foto" name="foto" accept="image/*" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </div>

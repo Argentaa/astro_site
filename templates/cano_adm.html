@@ -1,47 +1,108 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
+
     .cano-imagem {
         width: 100%;
         height: auto;
-        max-width: 400px;
+        max-width: 500px; /* Ajuste o tamanho máximo conforme necessário */
     }
+
     .table th, .table td {
         text-align: center;
         vertical-align: middle;
     }
 </style>
 
-<!-- Page Header Start -->
-<div class="container-fluid page-header py-5 mb-5 wow fadeIn" data-wow-delay="0.1s">
-    <div class="container text-center py-5">
-        <h1 class="display-4 text-white animated slideInDown mb-4">{{ cano[1] }}</h1>
-    </div>
-</div>
-<!-- Page Header End -->
 
 <!-- Cano Details Start -->
 <div class="container-xxl py-5">
     <div class="container">
+
         <div class="row g-4 justify-content-center">
             <div class="col-lg-8 wow fadeInUp" data-wow-delay="0.1s">
                 <div class="card">
-                    <img class="card-img-top cano-imagem" src="{{ url_for('static', filename=cano[3]) }}" alt="{{ cano[1] }}">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ cano[1] }}</h5>
-                        <pre class="card-text" style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.5;">{{ cano[2] }}</pre>
+                    <div class="row g-0">
+                        <!-- Coluna da Imagem -->
+                        <div class="col-md-5">
+                            <img class="img-fluid cano-imagem" src="{{ url_for('static', filename=cano[3]) }}" alt="{{ cano[1] }}">
+                        </div>
+                        <!-- Coluna do Texto -->
+                        <div class="col-md-7">
+                            <div class="card-body">
+                                <h5 class="card-title" style="font-size: 30px;">{{ cano[1] }}</h5>
+                                <pre class="card-text" style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.5;">{{ cano[2] }}</pre>
+                                <!-- Botão Editar -->
+                                <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#editModal">
+                                    Editar
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Modal para Edição -->
+        <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editModalLabel">Editar Informações</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="{{ url_for('editar_cano', id=cano[0]) }}" method="POST" enctype="multipart/form-data">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="titulo" class="form-label">Título:</label>
+                                <input type="text" class="form-control" id="titulo" name="titulo" value="{{ cano[1] }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="texto" class="form-label">Descrição:</label>
+                                <textarea class="form-control" id="texto" name="texto" rows="4">{{ cano[2] }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Fotos Atuais:</label>
+                                <div class="d-flex flex-wrap gap-2">
+
+                                    {% for foto in fotos_cano %}
+                                        <div class="position-relative" id="foto-{{ foto[0] }}">
+                                            <img class="img-thumbnail" src="{{ url_for('static', filename=foto[2]) }}" alt="{{ cano[1] }}" style="width: 100px;">
+                                            <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0" onclick="marcarParaExcluir('{{ foto[0] }}')">
+                                                &times;
+                                            </button>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <input type="hidden" name="fotos_a_excluir" id="fotos_a_excluir">
+                            </div>
+                            <div class="mb-3">
+                                <label for="nova_foto" class="form-label">Adicionar Mais Fotos</label>
+                                <input type="file" class="form-control" id="nova_foto" name="nova_foto" multiple>
+                            </div>
+                            <div class="mb-3">
+                                <label for="foto_principal" class="form-label">Substituir Foto Principal</label>
+                                <input type="file" class="form-control" id="foto_principal" name="foto_principal">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="recarregarPagina()">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <h5 style="color: red; text-align: center; margin-top: 1.5rem;">**Para apagar uma entrada, deixe o campo em branco e aperte o botão "Salvar Alterações"**</h5>
         <!-- Form para editar a tabela de Bitolas e Espessuras -->
-        <form action="" method="POST">
+        <form action="{{url_for('edit_caracteristicas', cano_id=cano[0])}}" method="POST">
             <div class="row g-4 justify-content-center mt-4">
                 <div class="col-lg-8 wow fadeInUp" data-wow-delay="0.1s">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Bitolas e Espessuras</h5>
+                            <h5 class="card-title" style="text-align: center;">Bitolas e Espessuras</h5>
                             <table class="table table-bordered" id="bitolas-table">
                                 <thead>
                                     <tr>
@@ -53,27 +114,30 @@
                                     {% for caracteristicas in resultados %}
                                         <tr>
                                             <td>
-                                                <input type="text" name="bitola_{{ caracteristicas['bitola'] }}" value="{{ caracteristicas['bitola'] }}" class="form-control" />
+                                                <input type="text" name="bitola_{{ caracteristicas['bitola_id'] }}" value="{{ caracteristicas['bitola'] }}" class="form-control" />
                                             </td>
 
                                             <!-- Container de espessuras -->
-                                            <td colspan="10">
-                                                <div id="espessuras-{{ loop.index }}" class="d-flex flex-wrap gap-2">
-                                                    {% set espessuras = caracteristicas['espessuras'].split(', ') if caracteristicas['espessuras'] is string else caracteristicas['espessuras'] %}
+                                           <td colspan="20">
+                                                <div class="d-flex flex-column align-items-center gap-2">
+                                                    <!-- Container para os inputs -->
+                                                    <div id="espessuras-{{ loop.index }}" class="d-flex flex-wrap gap-2 justify-content-center">
+                                                        {% set espessuras = caracteristicas['espessuras'].split(', ') if caracteristicas['espessuras'] is string else caracteristicas['espessuras'] %}
+                                                        
+                                                        {% for espessura, espessura_id in caracteristicas['espessuras_com_ids'] %}
+                                                            <div class="d-flex align-items-center mb-2">
+                                                                <input type="text" name="espessura_{{ espessura_id }}" value="{{ espessura }}" class="form-control" style="width: 70px;" />
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
 
-                                                    {% for espessura in espessuras %}
-                                                        <div class="d-flex align-items-center mb-2">
-                                                            <input type="text" name="espessura_{{ caracteristicas['bitola'] }}[]" value="{{ espessura }}" class="form-control" style="width: 70px;" />
-                                                            <button type="button" class="btn btn-danger btn-sm ms-2" onclick="removeEspessura(this)">
-                                                                <i class="bi bi-trash"></i>
-                                                            </button>
-                                                        </div>
-                                                    {% endfor %}
+                                                    <!-- Botão centralizado horizontalmente -->
+                                                    <button type="button" class="btn btn-success" onclick="addEspessura({{ loop.index }}, {{ caracteristicas['bitola_id'] }})">
+                                                        <i class="bi bi-plus"></i>
+                                                    </button>
                                                 </div>
-                                                <button type="button" class="btn btn-success mt-2" onclick="addEspessura({{ loop.index }})">
-                                                    <i class="bi bi-plus"></i>
-                                                </button>
                                             </td>
+
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -96,33 +160,29 @@
 <!-- Script para adicionar e remover inputs de espessura e bitola dinamicamente -->
 <script>
     let bitolaIndex = {{ resultados|length + 1 }};  // Define o índice inicial
+    var indentifcador = 0
 
-    function addEspessura(rowIndex) {
+    function addEspessura(rowIndex, bitolaID) {
+        indentifcador += 1 
+
         const container = document.getElementById(`espessuras-${rowIndex}`);
         const newDiv = document.createElement("div");
         newDiv.className = "d-flex align-items-center mb-2";
 
         const newInput = document.createElement("input");
         newInput.type = "text";
-        newInput.name = `espessura_nova_${rowIndex}[]`;
+        
+        if(bitolaID == undefined){
+            newInput.name = `nova_espessura_${bitolaIndex-1}_${indentifcador}`;
+        } else{
+            newInput.name = `nova_espessura_${bitolaID}_${indentifcador}`;
+        }
+        
         newInput.className = "form-control";
         newInput.style.width = "70px";
 
-        const removeButton = document.createElement("button");
-        removeButton.type = "button";
-        removeButton.className = "btn btn-danger btn-sm ms-2";
-        removeButton.innerHTML = '<i class="bi bi-trash"></i>';
-        removeButton.onclick = function() {
-            container.removeChild(newDiv);
-        };
-
         newDiv.appendChild(newInput);
-        newDiv.appendChild(removeButton);
         container.appendChild(newDiv);
-    }
-
-    function removeEspessura(button) {
-        button.parentNode.remove();
     }
 
     function addBitola() {
@@ -133,7 +193,7 @@
         const bitolaCell = document.createElement("td");
         const bitolaInput = document.createElement("input");
         bitolaInput.type = "text";
-        bitolaInput.name = `bitola_nova_${bitolaIndex}`;
+        bitolaInput.name = `nova_bitola_${bitolaIndex}`;
         bitolaInput.className = "form-control";
         bitolaCell.appendChild(bitolaInput);
         newRow.appendChild(bitolaCell);
@@ -152,5 +212,32 @@
         tableBody.appendChild(newRow);
         bitolaIndex++;
     }
+
+    function marcarParaExcluir(fotoId) {
+        const fotosParaExcluirInput = document.getElementById("fotos_a_excluir");
+        let fotosParaExcluir = fotosParaExcluirInput.value;
+        fotosParaExcluir = fotosParaExcluir ? fotosParaExcluir.split(",") : [];
+
+        const fotoDiv = document.getElementById("foto-" + fotoId);
+        
+        if (!fotosParaExcluir.includes(fotoId)) {
+            fotosParaExcluir.push(fotoId);
+            fotoDiv.style.display = 'none';  // Oculta a imagem
+            console.log(`Foto marcada para exclusão: ${fotoId}`);
+        } else {
+            fotosParaExcluir = fotosParaExcluir.filter(id => id !== fotoId);
+            fotoDiv.style.display = 'block';  // Restaura a imagem
+            console.log(`Foto restaurada: ${fotoId}`);
+        }
+
+        fotosParaExcluirInput.value = fotosParaExcluir.join(",");
+        console.log("Fotos para excluir:", fotosParaExcluirInput.value);
+    }
+
+    function recarregarPagina() {
+        location.reload();
+    }
+
+
 </script>
 {% endblock %}

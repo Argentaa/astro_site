@@ -135,6 +135,7 @@ def nossos_produtos():
     
     return render_template('produtos.html', canos=canos)
 
+@login_required
 @app.route('/adicionar-tubo', methods=['GET', 'POST'])
 def adicionar_cano():
     
@@ -190,39 +191,43 @@ def cano(cano_id):
             cano = cursor.fetchone()
 
             cursor.execute("""
-                                SELECT 
-                                    b.id AS bitola_id,
-                                    b.descricao AS bitola,
-                                    GROUP_CONCAT(e.id ORDER BY e.valor SEPARATOR ', ') AS espessura_ids,
-                                    GROUP_CONCAT(e.valor ORDER BY e.valor SEPARATOR ', ') AS espessuras
-                                FROM 
-                                    bitola b
-                                LEFT JOIN 
-                                    espessura e ON b.id = e.bitola_id
-                                WHERE 
-                                    b.cano_id = %s
-                                GROUP BY 
-                                    b.id
-                                ORDER BY 
-                                    b.id;
+                SELECT 
+                    b.id AS bitola_id,
+                    b.descricao AS bitola,
+                    GROUP_CONCAT(e.id ORDER BY e.valor SEPARATOR ', ') AS espessura_ids,
+                    GROUP_CONCAT(e.valor ORDER BY e.valor SEPARATOR ', ') AS espessuras
+                FROM 
+                    bitola b
+                LEFT JOIN 
+                    espessura e ON b.id = e.bitola_id
+                WHERE 
+                    b.cano_id = %s
+                GROUP BY 
+                    b.id
+                ORDER BY 
+                    b.id;
                             """, (cano_id,))
 
 
             resultados = cursor.fetchall()
             
             resultados_formatados = [
-                                        {
-                                            'bitola_id': bitola_id,
-                                            'bitola': bitola,
-                                            'espessuras': [float(valor.strip()) for valor in espessuras.split(',')],
-                                            'espessura_ids': [int(esp_id.strip()) for esp_id in espessura_ids.split(',')] if espessura_ids else []
-                                        } 
-                                        for bitola_id, bitola, espessura_ids, espessuras in resultados
-                                    ]
-
-            print(resultados_formatados)
-
-            cursor.close()
+                    {
+                        'bitola_id': bitola_id,
+                        'bitola': bitola,
+                        'espessuras': [float(valor.strip()) for valor in espessuras.split(',')] if espessura_ids else [],
+                        'espessura_ids': [int(esp_id.strip()) for esp_id in espessura_ids.split(',')] if espessura_ids else [],
+                        'espessuras_com_ids': list(zip(
+                            [float(valor.strip()) for valor in espessuras.split(',')] if espessura_ids else [],
+                            [int(esp_id.strip()) for esp_id in espessura_ids.split(',')] if espessura_ids else []
+                        ))
+                    }
+                    for bitola_id, bitola, espessura_ids, espessuras in resultados
+                ]
+            
+            cursor.execute(""" SELECT * FROM cano_fotos WHERE cano_id = %s""", (cano_id,))
+            fotos_canos = cursor.fetchall()
+            
         except Error as e:
             print(f"Erro ao consultar dados no banco de dados: {e}")
         finally:
@@ -230,46 +235,157 @@ def cano(cano_id):
     
     if cano:
         if current_user.is_authenticated:
-            return render_template('cano_adm.html', cano=cano, resultados=resultados_formatados)
-        return render_template('cano.html', cano=cano, resultados=resultados_formatados)
+            return render_template('cano_adm.html', cano=cano, resultados=resultados_formatados, fotos_cano=fotos_canos)
+        return render_template('cano.html', cano=cano, resultados=resultados_formatados, fotos_cano=fotos_canos)
     else:
         return "Cano não encontrado", 404
 
+@login_required
 @app.route('/edit_caracteristicas/<int:cano_id>', methods=['GET', 'POST'])
 def edit_caracteristicas(cano_id):
     conn = get_db_connection()
+    cursor = conn.cursor()
+
     if request.method == 'POST':
-        # Itera sobre bitolas e espessuras para atualização
+        for key, value in request.form.items():
+            print(f'key: {key}, value: {value}')
+
         for key, value in request.form.items():
             if key.startswith('bitola_'):
-                bitola_id = key.split('_')[1]
-                descricao = value
-                conn.execute("UPDATE bitola SET descricao = %s WHERE id = %s", (descricao, bitola_id))
+                try:
+                    bitola_id = int(key.split('_')[1])  # Extrair o ID da bitola
+                    descricao = value.strip()
+
+                    if descricao:  # Se a descrição não está em branco, atualiza
+                        cursor.execute("UPDATE bitola SET descricao = %s WHERE id = %s", (descricao, bitola_id))
+                    else:  # Se está em branco, apaga a bitola
+                        cursor.execute("DELETE FROM bitola WHERE id = %s", (bitola_id,))
+
+                except (ValueError, IndexError):
+                    print(f"Valor inválido para bitola_id: {key.split('_')[1]}")
+                    continue
 
             elif key.startswith('espessura_'):
-                bitola_id = key.split('_')[1]
-                espessuras = request.form.getlist(key)
-                # Atualizar ou inserir espessuras
-                conn.execute("DELETE FROM espessura WHERE bitola_id = %s", (bitola_id,))
-                for esp in espessuras:
-                    if esp.strip():
-                        conn.execute("INSERT INTO espessura (bitola_id, valor) VALUES (%s, %s)", (bitola_id, esp))
-        
-        # Inserir nova bitola e espessuras associadas
-        nova_bitola = request.form.get('nova_bitola')
-        novas_espessuras = request.form.getlist('nova_espessura')
-        if nova_bitola:
-            cursor = conn.execute("INSERT INTO bitola (cano_id, descricao) VALUES (%s, %s)", (1, nova_bitola))
-            nova_bitola_id = cursor.lastrowid
-            for esp in novas_espessuras:
-                if esp.strip():
-                    conn.execute("INSERT INTO espessura (bitola_id, valor) VALUES (%s, %s)", (nova_bitola_id, esp))
-        
+                try:
+                    espessura_id = int(key.split('_')[1])  # Extrair o ID da espessura
+                    esp_valor = value.strip()
+
+                    if esp_valor:  # Se o valor da espessura não está em branco, atualiza
+                        cursor.execute("UPDATE espessura SET valor = %s WHERE id = %s", (float(esp_valor), espessura_id))
+                    else:  # Se está em branco, apaga a espessura
+                        cursor.execute("DELETE FROM espessura WHERE id = %s", (espessura_id,))
+
+                except (ValueError, IndexError):
+                    print(f"Valor inválido para espessura: {value}")
+                    continue
+
+            elif key.startswith('nova_bitola_'):
+                try:
+                    nova_descricao = value.strip()
+                    if nova_descricao:  # Só insere uma nova bitola se tiver descrição
+                        cursor.execute("INSERT INTO bitola (cano_id, descricao) VALUES (%s, %s)", (cano_id, nova_descricao))
+                        nova_bitola_id = cursor.lastrowid  # Captura o ID da nova bitola inserida
+
+                        # Inserir espessuras associadas à nova bitola
+                        for esp_key, esp_value in request.form.items():
+                            # Verifica se o campo de espessura pertence a essa nova bitola
+                            if esp_key.startswith(f'nova_espessura_{key.split("_")[2]}_'):
+                                esp_valor = esp_value.strip()
+                                if esp_valor:  # Só insere se o valor da espessura não estiver em branco
+                                    cursor.execute("INSERT INTO espessura (bitola_id, valor) VALUES (%s, %s)", (nova_bitola_id, float(esp_valor)))
+
+                except (ValueError, IndexError):
+                    print(f"Valor inválido para nova bitola: {value}")
+                    continue
+
+            elif key.startswith('nova_espessura_'):
+                try:
+                    nova_bitola_id = int(key.split('_')[2])  # Extrair o ID da bitola associada
+                    cursor.execute("SELECT id FROM bitola WHERE id = %s", (nova_bitola_id,))
+                    if cursor.fetchone() is None:
+                        print(f"Bitola ID {nova_bitola_id} não encontrada para nova espessura.")
+                        continue
+                    
+                    esp_valor = value.strip()
+                    if esp_valor:  # Só insere se o valor da espessura não estiver em branco
+                        cursor.execute("INSERT INTO espessura (bitola_id, valor) VALUES (%s, %s)", (nova_bitola_id, float(esp_valor)))
+
+                except (ValueError, IndexError):
+                    print(f"Valor inválido para nova espessura: {value}")
+                    continue
+
         conn.commit()
-        return redirect(url_for('edit_bitolas'))
+        cursor.close()
+        conn.close()
+        return redirect(url_for('cano', cano_id=cano_id))
+
+@login_required
+@app.route('/editar/<int:id>', methods=['POST'])
+def editar_cano(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if request.method == 'POST':
+        # Atualizar informações do `cano`
+        nome = request.form['titulo']
+        descricao = request.form['texto']
+        
+        # Atualizar o campo `foto_principal` se uma nova imagem foi enviada
+        foto_principal = request.files.get('foto_principal')
+        
+        if foto_principal and foto_principal.filename != '':
+            timestamp = int(time.time())  
+            unique_id = uuid4().hex  
+            extension = os.path.splitext(foto_principal.filename)[1]
+            filename = f"{nome}_{timestamp}_{unique_id}{extension}"
+            foto_principal_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            foto_principal_path_bd = 'uploads/' + filename
+            
+            foto_principal.save(foto_principal_path)
+
+            # Obter o caminho atual da foto principal para deletar o arquivo antigo
+            cursor.execute("SELECT foto_principal_url FROM cano WHERE id = %s", (id,))
+            old_foto_principal = cursor.fetchone()
+            if old_foto_principal and old_foto_principal[0]:  # Verifica se o resultado não é None e se há uma URL
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], old_foto_principal[0]))
+
+            # Atualizar o caminho da foto principal no banco
+            cursor.execute("UPDATE cano SET nome = %s, descricao = %s, foto_principal_url = %s WHERE id = %s",
+                           (nome, descricao, foto_principal_path_bd, id))
+        else:
+            # Apenas atualizar nome e descrição se nenhuma nova foto principal for enviada
+            cursor.execute("UPDATE cano SET nome = %s, descricao = %s WHERE id = %s", (nome, descricao, id))
+
+        # Gerenciar fotos adicionais para `cano`
+        novas_fotos = request.files.getlist('nova_foto')
+        for foto in novas_fotos:
+            if foto.filename != '':
+                timestamp = int(time.time())  
+                unique_id = uuid4().hex  
+                extension = os.path.splitext(foto.filename)[1]
+                filename = f"{nome}_{timestamp}_{unique_id}{extension}"
+                foto_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                foto_path_bd = 'uploads/' + filename
+                
+                foto.save(foto_path)
+                cursor.execute("INSERT INTO cano_fotos (cano_id, foto_url) VALUES (%s, %s)", (id, foto_path_bd))
+
+        # Excluir fotos adicionais marcadas para remoção
+        fotos_a_excluir = request.form.getlist('fotos_a_excluir')[0].split(",")
+        for foto_id in fotos_a_excluir:
+            if foto_id:
+                cursor.execute("SELECT foto_url FROM cano_fotos WHERE id = %s", (foto_id,))
+                caminho_foto = cursor.fetchone()
+                if caminho_foto and caminho_foto[0]:  # Verifica se o caminho da foto existe
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], caminho_foto[0][8:]))
+                    cursor.execute("DELETE FROM cano_fotos WHERE id = %s", (foto_id,))
     
-    # Obter dados para exibir no template
-    return redirect(url_for('tubo', cano_id=cano_id))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return redirect(url_for('cano', cano_id=id))
+
 
 @app.errorhandler(404) 
 def not_found(e):  
