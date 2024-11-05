@@ -347,7 +347,7 @@ def editar_cano(id):
             cursor.execute("SELECT foto_principal_url FROM cano WHERE id = %s", (id,))
             old_foto_principal = cursor.fetchone()
             if old_foto_principal and old_foto_principal[0]:  # Verifica se o resultado não é None e se há uma URL
-                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], old_foto_principal[0]))
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], old_foto_principal[0][8:]))
 
             # Atualizar o caminho da foto principal no banco
             cursor.execute("UPDATE cano SET nome = %s, descricao = %s, foto_principal_url = %s WHERE id = %s",
