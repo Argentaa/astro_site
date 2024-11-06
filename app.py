@@ -239,10 +239,6 @@ def cano(cano_id):
                     for bitola_id, bitola, espessura_ids, espessuras in resultados
                 ]
             
-            cursor.execute(""" SELECT * FROM cano_fotos WHERE cano_id = %s""", (cano_id,))
-            fotos_canos = cursor.fetchall()
-            print(fotos_canos)
-            
         except Error as e:
             print(f"Erro ao consultar dados no banco de dados: {e}")
         finally:
@@ -250,8 +246,8 @@ def cano(cano_id):
     
     if cano:
         if current_user.is_authenticated:
-            return render_template('cano_adm.html', cano=cano, resultados=resultados_formatados, fotos_cano=fotos_canos)
-        return render_template('cano.html', cano=cano, resultados=resultados_formatados, fotos_cano=fotos_canos)
+            return render_template('cano_adm.html', cano=cano, resultados=resultados_formatados)
+        return render_template('cano.html', cano=cano, resultados=resultados_formatados)
     else:
         return "Cano não encontrado", 404
 
@@ -370,36 +366,26 @@ def editar_cano(id):
         else:
             # Apenas atualizar nome e descrição se nenhuma nova foto principal for enviada
             cursor.execute("UPDATE cano SET nome = %s, descricao = %s WHERE id = %s", (nome, descricao, id))
-
-        # Gerenciar fotos adicionais para `cano`
-        novas_fotos = request.files.getlist('nova_foto')
-        for foto in novas_fotos:
-            if foto.filename != '':
-                timestamp = int(time.time())  
-                unique_id = uuid4().hex  
-                extension = os.path.splitext(foto.filename)[1]
-                filename = f"{nome}_{timestamp}_{unique_id}{extension}"
-                foto_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                foto_path_bd = 'uploads/' + filename
-                
-                foto.save(foto_path)
-                cursor.execute("INSERT INTO cano_fotos (cano_id, foto_url) VALUES (%s, %s)", (id, foto_path_bd))
-
-        # Excluir fotos adicionais marcadas para remoção
-        fotos_a_excluir = request.form.getlist('fotos_a_excluir')[0].split(",")
-        for foto_id in fotos_a_excluir:
-            if foto_id:
-                cursor.execute("SELECT foto_url FROM cano_fotos WHERE id = %s", (foto_id,))
-                caminho_foto = cursor.fetchone()
-                if caminho_foto and caminho_foto[0]:  # Verifica se o caminho da foto existe
-                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], caminho_foto[0][8:]))
-                    cursor.execute("DELETE FROM cano_fotos WHERE id = %s", (foto_id,))
     
     conn.commit()
     cursor.close()
     conn.close()
 
     return redirect(url_for('cano', cano_id=id))
+
+@login_required
+@app.route('/editar/<int:cano_id>')
+def excluir_cano(cano_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("""DELETE FROM cano WHERE id = %s;""", (cano_id,))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('nossos_produtos'))
 
 @app.errorhandler(404) 
 def not_found(e):  

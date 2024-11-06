@@ -3,8 +3,8 @@
 <style>
 
     .cano-imagem {
-        height: 300px;
-        width: 300px; 
+        max-height: 300px;
+        max-width: 300px; 
     }
 
     .table th, .table td {
@@ -23,32 +23,12 @@
                     <div class="row g-0">
                         <!-- Coluna da Imagem com Carrossel -->
                         <div class="col-md-5 d-flex align-items-center justify-content-center">
-                            <div id="canoCarousel" class="carousel slide" data-bs-ride="carousel">
-                                <div class="carousel-inner">
-                                    <div class="carousel-item active">
-                                        <img src="{{ url_for('static', filename=cano[3]) }}" class="d-block w-100 cano-imagem" alt="Foto {{ cano[2] }}">
-                                    </div>
-                                    {% for foto_url in fotos_cano %}
-                                        <div class="carousel-item">
-                                            <img src="{{ url_for('static', filename=foto_url[2]) }}" class="d-block w-100 cano-imagem" alt="Foto {{ loop.index }}">
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                                <!-- Controles do Carrossel -->
-                                <button class="carousel-control-prev" type="button" data-bs-target="#canoCarousel" data-bs-slide="prev">
-                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">Anterior</span>
-                                </button>
-                                <button class="carousel-control-next" type="button" data-bs-target="#canoCarousel" data-bs-slide="next">
-                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">Próxima</span>
-                                </button>
-                            </div>
+                            <img class="img-fluid cano-imagem" src="{{ url_for('static', filename=cano[3]) }}" alt="{{ cano[1] }}" style="display: block;">
                         </div>
                         <!-- Coluna do Texto -->
                         <div class="col-md-7">
                             <div class="card-body">
-                                <h5 class="card-title" style="font-size: 30px;">{{ cano[1] }}</h5>
+                                <h5 class="card-title text-center text-md-start" style="font-size: 30px;">{{ cano[1] }}</h5>
                                 <pre class="card-text" style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.5;">{{ cano[2] }}</pre>
                                 <!-- Botão Editar -->
                                 <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#editModal">
@@ -78,37 +58,18 @@
                             <div class="mb-3">
                                 <label for="texto" class="form-label">Descrição:</label>
                                 <textarea class="form-control" id="texto" name="texto" rows="4">{{ cano[2] }}</textarea>
-                            </div> 
-                            <div class="mb-3">
-                                <label for="nova_foto" class="form-label">Adicionar Mais Fotos (Máximo 3 fotos):</label>
-                                <input type="file" class="form-control" id="nova_foto" name="nova_foto" multiple>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Fotos Atuais:</label>
-                                <div class="d-flex flex-wrap gap-2">
-
-                                    {% for foto in fotos_cano %}
-                                        <div class="position-relative" id="foto-{{ foto[0] }}">
-                                            <img class="img-thumbnail" src="{{ url_for('static', filename=foto[2]) }}" alt="{{ cano[1] }}" style="width: 150px;">
-                                            <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0" onclick="marcarParaExcluir('{{ foto[0] }}')">
-                                                &times;
-                                            </button>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-
-                                <input type="hidden" name="fotos_a_excluir" id="fotos_a_excluir">
-                            </div> 
-
-                            <div class="mb-3">
-                                <label for="foto_principal" class="form-label">Substituir Foto Principal:</label>
-                                <div class="position-relative" id="foto-{{ cano[3] }}">
-                                    <img class="img-thumbnail" src="{{ url_for('static', filename=cano[3]) }}" alt="{{ cano[1] }}" style="width: 150px; margin-bottom: 1rem;">
-                                </div>
+                                <label for="foto_principal" class="form-label">Substituir Foto</label>
                                 <input type="file" class="form-control" id="foto_principal" name="foto_principal">
                             </div>
+
+                            <a href="{{url_for('excluir_cano', cano_id=cano[0])}}" class="btn btn-danger">
+                                Excluir Cano
+                            </a>
                         </div>
+
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="recarregarPagina()">Cancelar</button>
                             <button type="submit" class="btn btn-primary">Salvar</button>
@@ -136,8 +97,8 @@
                                 <tbody>
                                     {% for caracteristicas in resultados %}
                                         <tr>
-                                            <td>
-                                                <input type="text" name="bitola_{{ caracteristicas['bitola_id'] }}" value="{{ caracteristicas['bitola'] }}" class="form-control" style="max-width: 150px; width:100%" />
+                                            <td class="text-center">
+                                                <input type="text" name="bitola_{{ caracteristicas['bitola_id'] }}" value="{{ caracteristicas['bitola'] }}" class="form-control" style="max-width: 150px; width: 100%; margin: auto;" />
                                             </td>
 
                                             <!-- Container de espessuras -->
@@ -211,15 +172,17 @@
     function addBitola() {
         const tableBody = document.querySelector("#bitolas-table tbody");
         const newRow = document.createElement("tr");
-
+        
         // Coluna da nova bitola
         const bitolaCell = document.createElement("td");
         const bitolaInput = document.createElement("input");
+        bitolaCell.className = 'text-center';
         bitolaInput.type = "text";
         bitolaInput.name = `nova_bitola_${bitolaIndex}`;
         bitolaInput.className = "form-control";
         bitolaInput.style.maxWidth = "150px";  // Define a largura máxima da célula de bitola
-        bitolaInput.style.width = "100%";      // Faz o input ocupar toda a largura disponível até o máximo
+        bitolaInput.style.width = "100%";    // Faz o input ocupar toda a largura disponível até o máximo
+        bitolaInput.style.margin = 'auto';
         bitolaCell.appendChild(bitolaInput);
         newRow.appendChild(bitolaCell);
 
@@ -227,7 +190,7 @@
         const espessurasCell = document.createElement("td");
         espessurasCell.colSpan = 10;
         espessurasCell.innerHTML = `
-            <div id="espessuras-${bitolaIndex}" class="d-flex flex-wrap gap-2"></div>
+            <div id="espessuras-${bitolaIndex}" class="d-flex flex-wrap gap-2 justify-content-center"></div>
             <button type="button" class="btn btn-success mt-2" onclick="addEspessura(${bitolaIndex})">
                 <i class="bi bi-plus"></i>
             </button>
@@ -237,34 +200,6 @@
         tableBody.appendChild(newRow);
         bitolaIndex++;
     }
-
-
-    function marcarParaExcluir(fotoId) {
-        const fotosParaExcluirInput = document.getElementById("fotos_a_excluir");
-        console.log(fotosParaExcluirInput)
-        let fotosParaExcluir = fotosParaExcluirInput.value ? fotosParaExcluirInput.value.split(",") : [];
-
-        const fotoDiv = document.getElementById("foto-" + fotoId);
-
-        // Checa se a foto já está marcada para exclusão
-        if (!fotosParaExcluir.includes(fotoId.toString())) {
-            // Foto não está na lista, então adiciona e oculta
-            fotosParaExcluir.push(fotoId.toString());
-            fotoDiv.style.display = 'none';  // Oculta a imagem
-        }
-
-        // Atualiza o valor do campo oculto
-        fotosParaExcluirInput.value = fotosParaExcluir.join(",");
-    }
-
-    function recarregarPagina() {
-        location.reload();
-    }
-
-    window.onload = function() {
-        document.getElementById("fotos_a_excluir").value = "";
-    };
-
 
 </script>
 {% endblock %}
