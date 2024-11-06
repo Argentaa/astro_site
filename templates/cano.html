@@ -23,10 +23,12 @@
             <div class="col-lg-8 wow fadeInUp" data-wow-delay="0.1s">
                 <div class="card">
                     <div class="row g-0">
-                        <div class="col-md-4">
-                            <img class="img-fluid cano-imagem" src="{{ url_for('static', filename=cano[3]) }}" alt="{{ cano[1] }}">
+                        <!-- Coluna da Imagem -->
+                        <div class="col-md-5 d-flex align-items-center justify-content-center">
+                            <img class="img-fluid cano-imagem" src="{{ url_for('static', filename=cano[3]) }}" alt="{{ cano[1] }}" style="display: block;">
                         </div>
-                        <div class="col-md-8">
+                        <!-- Coluna do Texto -->
+                        <div class="col-md-7">
                             <div class="card-body">
                                 <h5 class="card-title" style="font-size: 30px;">{{ cano[1] }}</h5>
                                 <pre class="card-text" style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.5;">{{ cano[2] }}</pre>

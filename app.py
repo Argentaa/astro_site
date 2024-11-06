@@ -227,6 +227,7 @@ def cano(cano_id):
             
             cursor.execute(""" SELECT * FROM cano_fotos WHERE cano_id = %s""", (cano_id,))
             fotos_canos = cursor.fetchall()
+            print(fotos_canos)
             
         except Error as e:
             print(f"Erro ao consultar dados no banco de dados: {e}")

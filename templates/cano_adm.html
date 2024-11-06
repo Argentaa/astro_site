@@ -3,9 +3,8 @@
 <style>
 
     .cano-imagem {
-        width: 100%;
-        height: auto;
-        max-width: 500px; /* Ajuste o tamanho máximo conforme necessário */
+        max-height: 200px;
+        width: 300px; 
     }
 
     .table th, .table td {
@@ -18,14 +17,33 @@
 <!-- Cano Details Start -->
 <div class="container-xxl py-5">
     <div class="container">
-
         <div class="row g-4 justify-content-center">
             <div class="col-lg-8 wow fadeInUp" data-wow-delay="0.1s">
                 <div class="card">
                     <div class="row g-0">
-                        <!-- Coluna da Imagem -->
+                        <!-- Coluna da Imagem com Carrossel -->
                         <div class="col-md-5 d-flex align-items-center justify-content-center">
-                            <img class="img-fluid cano-imagem" src="{{ url_for('static', filename=cano[3]) }}" alt="{{ cano[1] }}" style="display: block;">
+                            <div id="canoCarousel" class="carousel slide" data-bs-ride="carousel">
+                                <div class="carousel-inner">
+                                    <div class="carousel-item active">
+                                        <img src="{{ url_for('static', filename=cano[3]) }}" class="d-block w-100 cano-imagem" alt="Foto {{ cano[2] }}">
+                                    </div>
+                                    {% for foto_url in fotos_cano %}
+                                        <div class="carousel-item">
+                                            <img src="{{ url_for('static', filename=foto_url[2]) }}" class="d-block w-100 cano-imagem" alt="Foto {{ loop.index }}">
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <!-- Controles do Carrossel -->
+                                <button class="carousel-control-prev" type="button" data-bs-target="#canoCarousel" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Anterior</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#canoCarousel" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Próxima</span>
+                                </button>
+                            </div>
                         </div>
                         <!-- Coluna do Texto -->
                         <div class="col-md-7">
@@ -220,28 +238,29 @@
 
     function marcarParaExcluir(fotoId) {
         const fotosParaExcluirInput = document.getElementById("fotos_a_excluir");
-        let fotosParaExcluir = fotosParaExcluirInput.value;
-        fotosParaExcluir = fotosParaExcluir ? fotosParaExcluir.split(",") : [];
+        console.log(fotosParaExcluirInput)
+        let fotosParaExcluir = fotosParaExcluirInput.value ? fotosParaExcluirInput.value.split(",") : [];
 
         const fotoDiv = document.getElementById("foto-" + fotoId);
-        
-        if (!fotosParaExcluir.includes(fotoId)) {
-            fotosParaExcluir.push(fotoId);
+
+        // Checa se a foto já está marcada para exclusão
+        if (!fotosParaExcluir.includes(fotoId.toString())) {
+            // Foto não está na lista, então adiciona e oculta
+            fotosParaExcluir.push(fotoId.toString());
             fotoDiv.style.display = 'none';  // Oculta a imagem
-            console.log(`Foto marcada para exclusão: ${fotoId}`);
-        } else {
-            fotosParaExcluir = fotosParaExcluir.filter(id => id !== fotoId);
-            fotoDiv.style.display = 'block';  // Restaura a imagem
-            console.log(`Foto restaurada: ${fotoId}`);
         }
 
+        // Atualiza o valor do campo oculto
         fotosParaExcluirInput.value = fotosParaExcluir.join(",");
-        console.log("Fotos para excluir:", fotosParaExcluirInput.value);
     }
 
     function recarregarPagina() {
         location.reload();
     }
+
+    window.onload = function() {
+        document.getElementById("fotos_a_excluir").value = "";
+    };
 
 
 </script>
