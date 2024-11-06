@@ -11,6 +11,15 @@
     }
 </style>
 
+<style>
+.cano-imagem{
+    width: 100%;         
+    height: 200px;       
+    object-fit: cover;
+}
+
+</style>
+
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         <div class="flash-container">
@@ -150,36 +159,17 @@
             <h1 class="display-6 mb-5">Nossos Produtos</h1>
         </div>
         <div class="row g-4 justify-content-center">
-            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
-                <div class="service-item">
-                    <img class="img-fluid" src="{{ url_for('static', filename='img/redondo.png') }}" alt="">
-                    <div class="d-flex align-items-center bg-light">
-                        <div class="service-icon flex-shrink-0">
+            {% for cano in canos %}
+                <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                    <div class="service-item">
+                        <img class="img-fluid cano-imagem" src="static/{{ cano[3] }}" alt="{{ cano[1] }}">  
+                        <div class="d-flex align-items-center bg-light justify-content-center">
+                            <div class="service-icon flex-shrink-0 bg-primary teste"></div>
+                            <a class="h4 mx-4 mb-0 text-center" href="{{ url_for('cano', cano_id=cano[0]) }}">{{ cano[1] }}</a>
                         </div>
-                        <a class="h4 mx-4 mb-0 teste" href="">Tubo de ferro galvanizado redondo</a>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
-                <div class="service-item">
-                    <img class="img-fluid" src="{{ url_for('static', filename='img/quadrado.png') }}" alt="">
-                    <div class="d-flex align-items-center bg-light">
-                        <div class="service-icon flex-shrink-0">
-                        </div>
-                        <a class="h4 mx-4 mb-0 teste" href="">Tubo de ferro galvanizado quadrado</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.5s">
-                <div class="service-item">
-                    <img class="img-fluid" src="{{ url_for('static', filename='img/retangular.png') }}" alt="">
-                    <div class="d-flex align-items-center bg-light">
-                        <div class="service-icon flex-shrink-0">
-                        </div>
-                        <a class="h4 mx-4 mb-0 teste" href="">Tubo de ferro galvanizado retangular</a>
-                    </div>
-                </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
 </div>

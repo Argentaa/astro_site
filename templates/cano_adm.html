@@ -3,7 +3,7 @@
 <style>
 
     .cano-imagem {
-        max-height: 200px;
+        height: 300px;
         width: 300px; 
     }
 
@@ -137,7 +137,7 @@
                                     {% for caracteristicas in resultados %}
                                         <tr>
                                             <td>
-                                                <input type="text" name="bitola_{{ caracteristicas['bitola_id'] }}" value="{{ caracteristicas['bitola'] }}" class="form-control" />
+                                                <input type="text" name="bitola_{{ caracteristicas['bitola_id'] }}" value="{{ caracteristicas['bitola'] }}" class="form-control" style="max-width: 150px; width:100%" />
                                             </td>
 
                                             <!-- Container de espessuras -->
@@ -218,6 +218,8 @@
         bitolaInput.type = "text";
         bitolaInput.name = `nova_bitola_${bitolaIndex}`;
         bitolaInput.className = "form-control";
+        bitolaInput.style.maxWidth = "150px";  // Define a largura máxima da célula de bitola
+        bitolaInput.style.width = "100%";      // Faz o input ocupar toda a largura disponível até o máximo
         bitolaCell.appendChild(bitolaInput);
         newRow.appendChild(bitolaCell);
 
@@ -235,6 +237,7 @@
         tableBody.appendChild(newRow);
         bitolaIndex++;
     }
+
 
     function marcarParaExcluir(fotoId) {
         const fotosParaExcluirInput = document.getElementById("fotos_a_excluir");

@@ -104,7 +104,21 @@ def logout():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    connection = get_db_connection()
+    
+    if connection:
+        try:
+            cursor = connection.cursor()
+            sql = "SELECT id, nome, descricao, foto_principal_url FROM cano;"
+            cursor.execute(sql)
+            canos = cursor.fetchall() 
+            cursor.close()
+        except Error as e:
+            print(f"Erro ao consultar dados no banco de dados: {e}")
+        finally:
+            connection.close()
+
+    return render_template('index.html', canos=canos)
 
 @app.route('/contato')
 def contato():
@@ -386,7 +400,6 @@ def editar_cano(id):
     conn.close()
 
     return redirect(url_for('cano', cano_id=id))
-
 
 @app.errorhandler(404) 
 def not_found(e):  

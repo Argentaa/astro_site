@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
 
+    <style>
+    .cano-imagem{
+        width: 100%;         
+        height: 200px;       
+        object-fit: cover;
+    }
+    
+    </style>
+
     <!-- Page Header Start -->
     <div class="container-fluid page-header py-5 mb-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container text-center py-5">
@@ -12,16 +21,14 @@
     <!-- Service Start -->
     <div class="container-xxl py-5">
         <div class="container">
-            
-
             <!-- Produtos Existentes -->
             <div class="row g-4 justify-content-center">
                 {% for cano in canos %}
                     <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
                         <div class="service-item">
-                            <img class="img-fluid" src="static/{{ cano[3] }}" alt="{{ cano[1] }}" style="width: 500px;">  
-                            <div class="d-flex align-items-center bg-light">
-                                <div class="service-icon flex-shrink-0 bg-primary"></div>
+                            <img class="img-fluid cano-imagem" src="static/{{ cano[3] }}" alt="{{ cano[1] }}">  
+                            <div class="d-flex align-items-center bg-light justify-content-center">
+                                <div class="service-icon flex-shrink-0 bg-primary teste"></div>
                                 <a class="h4 mx-4 mb-0 text-center" href="{{ url_for('cano', cano_id=cano[0]) }}">{{ cano[1] }}</a>
                             </div>
                         </div>
@@ -29,9 +36,8 @@
                 {% endfor %}
             </div>
 
-            
             <div class="text-center mb-4" style="margin-top: 1.5rem;">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCanoModal" >
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCanoModal">
                     Adicionar Tubo
                 </button>
             </div>
