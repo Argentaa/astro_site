@@ -29,10 +29,17 @@
                         <!-- Coluna do Texto -->
                         <div class="col-md-7">
                             <div class="card-body">
-                                <h5 class="card-title" style="font-size: 30px;">{{ cano[1] }}</h5>
-                                <pre class="card-text" style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.5;">{{ cano[2] }}</pre>
+                                <h5 class="card-title text-center text-md-start" style="font-size: 30px;">{{ cano[1] }}</h5>
+                                <pre class="card-text text-center text-md-start" style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.5;">{{ cano[2] }}</pre>
                             </div>
                         </div>
+                    </div>
+                    <!-- Botão do WhatsApp -->
+                    <div class="text-center mt-3">
+                        <a href="https://wa.me/5511975262854?text={{ 'Olá, gostaria de saber mais sobre o produto: ' ~ cano[1] | urlencode }}" 
+                        class="btn btn-success d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-whatsapp"></i> Saber mais sobre o Produto
+                        </a>
                     </div>
                 </div>
             </div>
@@ -52,19 +59,24 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                {% set max_espessuras = resultados | map(attribute='espessuras') | map('length') | max %}
                                 {% for caracteristicas in resultados %}
                                 <tr>
                                     <td>{{ caracteristicas['bitola'] }}</td>
 
-                                    {% for espessura in caracteristicas['espessuras'] %}
+                                    {% set espessuras = caracteristicas['espessuras'] %}
+                                    {% for espessura in espessuras %}
                                         <td>{{ espessura }}</td>
                                     {% endfor %}
 
+                                    {# Adiciona células vazias somente até o número máximo de espessuras #}
+                                    {% for _ in range(max_espessuras - espessuras|length) %}
+                                        <td>&nbsp;</td>
+                                    {% endfor %}
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
-                        
                     </div>
                 </div>
             </div>

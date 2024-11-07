@@ -109,7 +109,7 @@ def index():
     if connection:
         try:
             cursor = connection.cursor()
-            sql = "SELECT id, nome, descricao, foto_principal_url FROM cano;"
+            sql = "SELECT id, nome, descricao, foto_principal_url FROM cano LIMIT 3;"
             cursor.execute(sql)
             canos = cursor.fetchall() 
             cursor.close()
@@ -123,10 +123,6 @@ def index():
 @app.route('/contato')
 def contato():
     return render_template('contact.html')
-
-@app.route('/orçamento')
-def orcamento():
-    return render_template('quote.html')
 
 @app.route('/nossos-produtos', methods=['GET'])
 def nossos_produtos():
@@ -238,7 +234,7 @@ def cano(cano_id):
                     }
                     for bitola_id, bitola, espessura_ids, espessuras in resultados
                 ]
-            
+            print(resultados_formatados)
         except Error as e:
             print(f"Erro ao consultar dados no banco de dados: {e}")
         finally:
@@ -261,6 +257,7 @@ def edit_caracteristicas(cano_id):
         for key, value in request.form.items():
             print(f'key: {key}, value: {value}')
 
+        # Atualização das bitolas
         for key, value in request.form.items():
             if key.startswith('bitola_'):
                 try:
@@ -276,13 +273,24 @@ def edit_caracteristicas(cano_id):
                     print(f"Valor inválido para bitola_id: {key.split('_')[1]}")
                     continue
 
+            # Atualização das espessuras
             elif key.startswith('espessura_'):
                 try:
                     espessura_id = int(key.split('_')[1])  # Extrair o ID da espessura
                     esp_valor = value.strip()
 
+                    # Substituir a vírgula por ponto, se necessário
+                    esp_valor = esp_valor.replace(",", ".")
+
+                    # Validar se o valor é numérico (float)
+                    try:
+                        float(esp_valor)  # Verifica se é um número válido
+                    except ValueError:
+                        print(f"Espessura inválida: {esp_valor}")
+                        continue
+
                     if esp_valor:  # Se o valor da espessura não está em branco, atualiza
-                        cursor.execute("UPDATE espessura SET valor = %s WHERE id = %s", (float(esp_valor), espessura_id))
+                        cursor.execute("UPDATE espessura SET valor = %s WHERE id = %s", (esp_valor, espessura_id))
                     else:  # Se está em branco, apaga a espessura
                         cursor.execute("DELETE FROM espessura WHERE id = %s", (espessura_id,))
 
@@ -290,6 +298,7 @@ def edit_caracteristicas(cano_id):
                     print(f"Valor inválido para espessura: {value}")
                     continue
 
+            # Inserção de nova bitola
             elif key.startswith('nova_bitola_'):
                 try:
                     nova_descricao = value.strip()
@@ -302,13 +311,24 @@ def edit_caracteristicas(cano_id):
                             # Verifica se o campo de espessura pertence a essa nova bitola
                             if esp_key.startswith(f'nova_espessura_{key.split("_")[2]}_'):
                                 esp_valor = esp_value.strip()
+                                # Substituir vírgula por ponto
+                                esp_valor = esp_valor.replace(",", ".")
+
+                                # Validar se o valor é numérico (float)
+                                try:
+                                    float(esp_valor)  # Verifica se é um número válido
+                                except ValueError:
+                                    print(f"Nova espessura inválida: {esp_valor}")
+                                    continue
+
                                 if esp_valor:  # Só insere se o valor da espessura não estiver em branco
-                                    cursor.execute("INSERT INTO espessura (bitola_id, valor) VALUES (%s, %s)", (nova_bitola_id, float(esp_valor)))
+                                    cursor.execute("INSERT INTO espessura (bitola_id, valor) VALUES (%s, %s)", (nova_bitola_id, esp_valor))
 
                 except (ValueError, IndexError):
                     print(f"Valor inválido para nova bitola: {value}")
                     continue
 
+            # Inserção de nova espessura
             elif key.startswith('nova_espessura_'):
                 try:
                     nova_bitola_id = int(key.split('_')[2])  # Extrair o ID da bitola associada
@@ -318,8 +338,18 @@ def edit_caracteristicas(cano_id):
                         continue
                     
                     esp_valor = value.strip()
+                    # Substituir vírgula por ponto
+                    esp_valor = esp_valor.replace(",", ".")
+
+                    # Validar se o valor é numérico (float)
+                    try:
+                        float(esp_valor)  # Verifica se é um número válido
+                    except ValueError:
+                        print(f"Nova espessura inválida: {esp_valor}")
+                        continue
+
                     if esp_valor:  # Só insere se o valor da espessura não estiver em branco
-                        cursor.execute("INSERT INTO espessura (bitola_id, valor) VALUES (%s, %s)", (nova_bitola_id, float(esp_valor)))
+                        cursor.execute("INSERT INTO espessura (bitola_id, valor) VALUES (%s, %s)", (nova_bitola_id, esp_valor))
 
                 except (ValueError, IndexError):
                     print(f"Valor inválido para nova espessura: {value}")
@@ -329,6 +359,8 @@ def edit_caracteristicas(cano_id):
         cursor.close()
         conn.close()
         return redirect(url_for('cano', cano_id=cano_id))
+
+
 
 @login_required
 @app.route('/editar/<int:id>', methods=['POST'])
